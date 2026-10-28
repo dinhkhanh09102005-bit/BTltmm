@@ -30,3 +30,28 @@ def _rot_word(word: bytes) -> bytes:
 
 def _sub_word(word: bytes) -> bytes:
     return bytes(SBOX[value] for value in word)
+def expand_key(key: ByteData) -> tuple[bytes, ...]:
+    key = _validate_input(key, 16, "key")
+    words = [
+        key[i:i + 4]
+        for i in range(0, 16, 4)
+    ]
+    for i in range(4, 44):
+        temp = words[i - 1]
+        if i % 4 == 0:
+            temp = _sub_word(_rot_word(temp))
+
+            rcon_value = bytes((RCON[i // 4], 0, 0, 0))
+            temp = bytes(
+                a ^ b for a, b in zip(temp, rcon_value)
+            )
+        new_word = bytes(
+            a ^ b for a, b in zip(words[i - 4], temp)
+        )
+        words.append(new_word)
+    round_keys = tuple(
+        b"".join(words[i:i + 4])
+        for i in range(0, 44, 4)
+    )
+
+    return round_keys
