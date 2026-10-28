@@ -24,3 +24,14 @@ def encrypt_block(round_keys: Sequence[bytes], block: ByteData) -> bytes:
         if len(key) != 16:
             raise ValueError(f"round_keys[{index}] must be exactly 16 bytes")
         checked_keys.append(key)
+    state = bytearray(block)
+    state = add_round_key(state, checked_keys[0])
+    for round_no in range(1, 10):
+        state = sub_bytes(state)
+        state = shift_rows(state)
+        state = mix_columns(state)
+        state = add_round_key(state, checked_keys[round_no])
+    state = sub_bytes(state)
+    state = shift_rows(state)
+    state = add_round_key(state, checked_keys[10])
+    return bytes(state)
